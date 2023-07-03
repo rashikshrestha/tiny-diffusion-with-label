@@ -65,3 +65,45 @@ def get_dataset(name, n=8000):
         return circle_dataset(n)
     else:
         raise ValueError(f"Unknown dataset: {name}")
+
+def all_dataset(n=8000):
+    dnames = ['moons', 'dino', 'line', 'circle']
+
+    dataset_acc = []
+    for idx, name in enumerate(dnames):
+        dataset = get_dataset(name)
+
+        for d in dataset:
+            data_point = [d[0][0].item(), d[0][1].item(), idx]
+            dataset_acc.append(data_point)
+
+    all_dataset = torch.tensor(dataset_acc)
+
+    return TensorDataset(all_dataset)
+
+
+def point_dataset(point_data, n=8000):
+    point_data = [point_data,]
+    return torch.tensor(point_data*n)
+
+def all_point_dataset(n=8000):
+    points = [[2,2,0], [2,-2,1], [-2,-2,2], [-2,2,3]]
+
+    all_dataset = []
+    for p in points:
+        all_dataset.append(point_dataset(p, n))
+
+    all_dataset = torch.cat(all_dataset)
+
+    return TensorDataset(all_dataset)
+
+# data = all_point_dataset()
+# print(data.shape)
+# print(data[0])
+# print(data[7999])
+# print(data[8000])
+# print(data[16000])
+# print(data[2400])
+
+
+
