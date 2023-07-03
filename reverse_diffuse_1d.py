@@ -49,8 +49,14 @@ if __name__ == "__main__":
     timesteps = list(range(len(noise_scheduler)))[::-1]
 
     #! Define Inputs and Outputs
-    labels = [0,1,2,3] #! Inputs
-    expected_op = [[2,2],[2,-2],[-2,-2],[-2,2]] #! Expected Outputs
+    # labels = [0,1,2,3] #! Inputs
+    # expected_op = [[2,2],[2,-2],[-2,-2],[-2,2]] #! Expected Outputs
+
+    # labels = [0, 90, 180, 270] #! Inputs
+    # expected_op = [[0,1],[1,0],[0,-1],[-1,0]] #! Expected Outputs
+
+    labels = [45, 135] #! Inputs
+    expected_op = [[0.71, 0.71], [0.71, -0.71]] #! Expected Outputs
 
     ip_dim = 1
     op_dim = 2
@@ -85,7 +91,7 @@ if __name__ == "__main__":
             #! Error between exp_val and result
             error = np.abs(result - exp_op)
 
-            error_thres = 0.01
+            error_thres = 0.1
             correct_result = error < error_thres 
 
             correct_filter.append(correct_result)
@@ -118,15 +124,15 @@ if __name__ == "__main__":
 
             #! Hist Plot 1
             hist_ax[0].set_xlim(-3,3)
-            hist_ax[0].set_ylim(0,1000)
+            hist_ax[0].set_ylim(0, config.eval_batch_size)
 
-            hist_ax[0].hist(frame[:,0], bins=n_bins)
+            hist_ax[0].hist(frame[:,0], bins=np.linspace(-3,3,100))
 
             #! Hist Plot 2
             hist_ax[1].set_xlim(-3,3)
-            hist_ax[1].set_ylim(0,1000)
+            hist_ax[1].set_ylim(0, config.eval_batch_size)
 
-            hist_ax[1].hist(frame[:,1], bins=n_bins)
+            hist_ax[1].hist(frame[:,1], bins=np.linspace(-3,3,100))
 
 
 

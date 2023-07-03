@@ -35,7 +35,8 @@ if __name__ == "__main__":
     config = parser.parse_args()
 
     # dataset = datasets.get_dataset(config.dataset)
-    dataset = datasets.all_point_dataset()
+    # dataset = datasets.all_point_dataset()
+    dataset = datasets.fn_dataset(labels=np.linspace(0,360,100).astype(np.int))
 
     dataloader = DataLoader(
         dataset, batch_size=config.train_batch_size, shuffle=True, drop_last=True)

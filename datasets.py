@@ -94,8 +94,38 @@ def all_point_dataset(n=8000):
         all_dataset.append(point_dataset(p, n))
 
     all_dataset = torch.cat(all_dataset)
-
     return TensorDataset(all_dataset)
+
+def sin_fn(labels):
+    return  torch.sin(torch.deg2rad(labels))
+
+def cos_fn(labels):
+    return  torch.cos(torch.deg2rad(labels))
+
+def fn_dataset(out_fn=['sin','cos'], labels=[0,90,180,270], n=8000):
+    data_per_label = int(n/len(labels))
+    print(f"Generating {data_per_label} data ponits per labels")
+
+    all_dataset = []
+    for l in labels:
+        lab = torch.tensor([l,]*data_per_label).reshape(-1,1)
+
+        fn_out = []
+        for fn in out_fn:
+            data = eval(f"{fn}_fn(lab)")
+            fn_out.append(data)
+
+        data_with_labels = torch.hstack((*fn_out, lab))
+        all_dataset.append(data_with_labels)
+
+    all_dataset = torch.cat(all_dataset)
+    return TensorDataset(all_dataset)
+    
+
+
+
+
+
 
 # data = all_point_dataset()
 # print(data.shape)
