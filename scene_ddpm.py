@@ -14,6 +14,28 @@ from scene_dataset import SceneDataset
 from scene_model import MLP
 from noise_scheduler import NoiseScheduler
 
+def normalize_qt(qt):
+        
+    #! Normalize q
+    q = qt[:, :4]
+    q_norm = torch.linalg.norm(q, dim=1)
+    q = q/q_norm.reshape(-1,1)
+    qt[:, :4] = q
+
+    #! Normalize t
+    #TODO: Should we do this as well ??
+    x_min, x_max = torch.min(qt[:, 4]), torch.max(qt[:,4])
+    y_min, y_max = torch.min(qt[:, 5]), torch.max(qt[:,5])
+    z_min, z_max = torch.min(qt[:, 6]), torch.max(qt[:,6])
+
+    qt[:, 4] = (qt[:, 4] - x_min) / (x_max - x_min)
+    qt[:, 5] = (qt[:, 5] - y_min) / (y_max - y_min)
+    qt[:, 6] = (qt[:, 6] - z_min) / (z_max - z_min)
+
+    qt[:, 4:] = (qt[:, 4:] * 2) -1
+
+    return qt
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -80,26 +102,32 @@ if __name__ == "__main__":
         for step, batch in enumerate(dataloader):
             image, qctc = batch['image'], batch['qctc']
 
-            print(image.shape, qctc.shape)
+            # print(image.shape, qctc.shape)
             # input()
             # batch = batch[0]
             # print(batch)
             # input()
 
+            #! Random Noise
             noise = torch.randn(qctc.shape)
+
+            #! Random Timesteps between 0-50
             timesteps = torch.randint(
                 0, noise_scheduler.num_timesteps, (qctc.shape[0],)
             ).long()
 
             #! Add noise to the Batch, for given timestep
             noisy = noise_scheduler.add_noise(qctc, noise, timesteps)
+            noisy = normalize_qt(noisy) #TODO Check how effective is this process !!!
 
             noisy = noisy.to(config.device)
             timesteps = timesteps.to(config.device)
             image = image.to(config.device)
 
             #! Predict the noise added in the Batch
-            # print(noisy.shape, timesteps.shape, labels.shape)
+            # print("shapes of input:")
+            # print(noisy.shape, timesteps.shape, image.shape)
+            # input()
             noise_pred = model(noisy, timesteps, image)
             # print(noise_pred.shape)noise_scheduler
             # input()
@@ -150,22 +178,22 @@ if __name__ == "__main__":
     os.makedirs(outdir, exist_ok=True)
     torch.save(model.state_dict(), f"{outdir}/model.pth")
 
-    print("Saving images...")
-    imgdir = f"{outdir}/images"
-    os.makedirs(imgdir, exist_ok=True)
-    frames = np.stack(frames)
-    xmin, xmax = -6, 6
-    ymin, ymax = -6, 6
-    for i, frame in enumerate(frames):
-        plt.figure(figsize=(10, 10))
-        plt.scatter(frame[:, 0], frame[:, 1])
-        plt.xlim(xmin, xmax)
-        plt.ylim(ymin, ymax)
-        plt.savefig(f"{imgdir}/{i:04}.png")
-        plt.close()
+    # print("Saving images...")
+    # imgdir = f"{outdir}/images"
+    # os.makedirs(imgdir, exist_ok=True)
+    # frames = np.stack(frames)
+    # xmin, xmax = -6, 6
+    # ymin, ymax = -6, 6
+    # for i, frame in enumerate(frames):
+    #     plt.figure(figsize=(10, 10))
+    #     plt.scatter(frame[:, 0], frame[:, 1])
+    #     plt.xlim(xmin, xmax)
+    #     plt.ylim(ymin, ymax)
+    #     plt.savefig(f"{imgdir}/{i:04}.png")
+    #     plt.close()
 
     print("Saving loss as numpy array...")
     np.save(f"{outdir}/loss.npy", np.array(losses))
 
-    print("Saving frames...")
-    np.save(f"{outdir}/frames.npy", frames)
+    # print("Saving frames...")
+    # np.save(f"{outdir}/frames.npy", frames)

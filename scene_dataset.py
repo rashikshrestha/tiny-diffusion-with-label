@@ -8,7 +8,7 @@ import torch
 
 
 class SceneDataset(Dataset):
-    def __init__(self, path='/home/sunycs/rashik/dataset/dtu_scene6'):
+    def __init__(self, path='/home/menelaos/Desktop/dtu_colmap_reconstruction/dataset'):
         self.path = path
         self.data = read_images_text(f"{path}/images.txt")
         # print(self.data)
