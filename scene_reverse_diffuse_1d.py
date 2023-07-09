@@ -14,11 +14,11 @@ def get_unit_cam():
     f = 10
     unit_cam = np.array([
         [0,0,0],
-        [3,2,f],
         [3,-2,f],
-        [-3,-2,f],
+        [3,2,f],
         [-3,2,f],
-        [0,4,f]
+        [-3,-2,f],
+        [0,-4,f]
     ])
 
     seq = np.array([3,4,1,2,0,1,5,4,0,3,2])
@@ -44,11 +44,11 @@ def normalize_qt(qt):
     q = q/q_norm.reshape(-1,1)
     qt[:, :4] = q
 
-    # #! Normalize t
-    # #TODO: Should we do this as well ??
-    # x_min, x_max = torch.min(qt[:, 4]), torch.max(qt[:,4])
-    # y_min, y_max = torch.min(qt[:, 5]), torch.max(qt[:,5])
-    # z_min, z_max = torch.min(qt[:, 6]), torch.max(qt[:,6])
+    #! Normalize t
+    #TODO: Should we do this as well ??
+    # x_min, x_max = np.min(qt[:, 4]), np.max(qt[:,4])
+    # y_min, y_max = np.min(qt[:, 5]), np.max(qt[:,5])
+    # z_min, z_max = np.min(qt[:, 6]), np.max(qt[:,6])
 
     # qt[:, 4] = (qt[:, 4] - x_min) / (x_max - x_min)
     # qt[:, 5] = (qt[:, 5] - y_min) / (y_max - y_min)
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     config = parser.parse_args()
 
     #! Define Dataset
-    dataset = SceneDataset()
+    dataset = SceneDataset(test=True)
 
 
     #! Define Model
@@ -138,6 +138,7 @@ if __name__ == "__main__":
         print("Labels and Expected Outputs are:", label.shape, exp_op)
         #! Get a random data sample
         sample = torch.randn(config.eval_batch_size, op_dim)
+        # sample = normalize_qt(sample)
         initial_sample = sample.numpy()
 
         fake_y = np.random.rand(*initial_sample.shape)
@@ -166,6 +167,7 @@ if __name__ == "__main__":
                 residual = model(sample, t, l)
 
             sample = noise_scheduler.step(residual.cpu(), t[0].cpu(), sample.cpu())
+            # sample = normalize_qt(sample)
 
             result = sample.numpy()
 
@@ -181,7 +183,7 @@ if __name__ == "__main__":
 
         #! ---------------------------------------------------------------------
 
-        label 
+        # label 
         print(f"Saving reverse diffusion images for label {label_named[count]} ...")
         imgdir = f"exps/{config.experiment_name}/rev_diffusion/label_{label_named[count]}"
         os.makedirs(imgdir, exist_ok=True)
@@ -197,7 +199,8 @@ if __name__ == "__main__":
         xmin, xmax = -6, 6
         ymin, ymax = -6, 6
 
-        for i, frame in enumerate(frames):
+        print("Writing ...")
+        for i, frame in tqdm(enumerate(frames)):
 
             # print("This is frame")
             # print(frame.shape)
@@ -270,5 +273,7 @@ if __name__ == "__main__":
             # # plt.ylim(ymin, ymax)
             # plt.savefig(f"{imgdir}/{i:04}.png")
             # plt.close()            
-            
+
+
         print("Done !")
+        input()

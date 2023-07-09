@@ -24,36 +24,47 @@ def normalize_qt(qt):
 
     #! Normalize t
     #TODO: Should we do this as well ??
-    x_min, x_max = torch.min(qt[:, 4]), torch.max(qt[:,4])
-    y_min, y_max = torch.min(qt[:, 5]), torch.max(qt[:,5])
-    z_min, z_max = torch.min(qt[:, 6]), torch.max(qt[:,6])
+    # x_min, x_max = torch.min(qt[:, 4]), torch.max(qt[:,4])
+    # y_min, y_max = torch.min(qt[:, 5]), torch.max(qt[:,5])
+    # z_min, z_max = torch.min(qt[:, 6]), torch.max(qt[:,6])
 
-    qt[:, 4] = (qt[:, 4] - x_min) / (x_max - x_min)
-    qt[:, 5] = (qt[:, 5] - y_min) / (y_max - y_min)
-    qt[:, 6] = (qt[:, 6] - z_min) / (z_max - z_min)
+    # qt[:, 4] = (qt[:, 4] - x_min) / (x_max - x_min)
+    # qt[:, 5] = (qt[:, 5] - y_min) / (y_max - y_min)
+    # qt[:, 6] = (qt[:, 6] - z_min) / (z_max - z_min)
 
-    qt[:, 4:] = (qt[:, 4:] * 2) -1
+    # qt[:, 4:] = (qt[:, 4:] * 2) -1
 
     return qt
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+
+    #! General
     parser.add_argument("--experiment_name", type=str, default="base")
+
+    #! Training params
     parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "cuda"])
-    # parser.add_argument("--dataset", type=str, default="dino", choices=["circle", "dino", "line", "moons"])
-    # parser.add_argument("--train_batch_size", type=int, default=32)
-    parser.add_argument("--eval_batch_size", type=int, default=1000)
     parser.add_argument("--num_epochs", type=int, default=200)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
+
+    #! Diffusion params
+    parser.add_argument("--eval_batch_size", type=int, default=100)
     parser.add_argument("--num_timesteps", type=int, default=50)
     parser.add_argument("--beta_schedule", type=str, default="linear", choices=["linear", "quadratic"])
-    parser.add_argument("--embedding_size", type=int, default=128)
+
+    #! Architecture
     parser.add_argument("--hidden_size", type=int, default=1024)
     parser.add_argument("--hidden_layers", type=int, default=5)
+
+    parser.add_argument("--embedding_size", type=int, default=128)
     parser.add_argument("--time_embedding", type=str, default="sinusoidal", choices=["sinusoidal", "learnable", "linear", "zero"])
     parser.add_argument("--input_embedding", type=str, default="sinusoidal", choices=["sinusoidal", "learnable", "linear", "identity"])
+
+    #! Logging
     parser.add_argument("--save_images_step", type=int, default=1)
+
+    #! Parse the args 
     config = parser.parse_args()
 
     #! Define Dataset
@@ -65,7 +76,6 @@ if __name__ == "__main__":
     # for data in dataloader:
     #     print(data['image'].shape)
     #     print(data['qctc'].shape)
-
     # input()
 
     model = MLP(
@@ -74,8 +84,6 @@ if __name__ == "__main__":
         emb_size=config.embedding_size,
         time_emb=config.time_embedding,
         input_emb=config.input_embedding).to(config.device)
-
-    # print(model)
 
     noise_scheduler = NoiseScheduler(
         num_timesteps=config.num_timesteps,
@@ -118,7 +126,7 @@ if __name__ == "__main__":
 
             #! Add noise to the Batch, for given timestep
             noisy = noise_scheduler.add_noise(qctc, noise, timesteps)
-            noisy = normalize_qt(noisy) #TODO Check how effective is this process !!!
+            # noisy = normalize_qt(noisy) #TODO Check how effective is this process !!!
 
             noisy = noisy.to(config.device)
             timesteps = timesteps.to(config.device)

@@ -1,4 +1,3 @@
-import os
 from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
@@ -8,55 +7,61 @@ import torch
 
 
 class SceneDataset(Dataset):
-    def __init__(self, path='/home/menelaos/Desktop/dtu_colmap_reconstruction/dataset'):
+    def __init__(self, path='/home/menelaos/rashik/others/dtu_reconstruct', test=False):
         self.path = path
+
+        #! Select dataset based on Train/Test
+        # if test:
+            # self.data = read_images_text(f"{path}/images_test.txt")
+        # else:
         self.data = read_images_text(f"{path}/images.txt")
-        # print(self.data)
+
+        #! Extract reqd data
         self.data_keys = list(self.data.keys())
         self.qctc, self.image_names = self.get_qc_tc_names()
 
+        #! Pre-processing as suggested when using ImageNet
         self.preprocess = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-
-        # print(self.image_names)
 
 
     def get_qc_tc_names(self):
         qctc = []
         image_names = []
         for k in self.data_keys:
+            #! Get data point
             data_point = self.data[k]
 
             image_names.append(data_point.name)
-
             q = data_point.qvec
             t = data_point.tvec.reshape(-1,1)
             R = qvec2rotmat(q)
 
+            #! Convert extrinsics to poses
             Rc = R.T
             tc = -R.T@t
-
             qc = rotmat2qvec(Rc) #TODO Check if these rot2mat and mat2rot works fine !!
-            qc = qc / np.linalg.norm(qc)
+            qc = qc / np.linalg.norm(qc) # Normalize the quaternions
 
+            #! Accumulate everything
             out_data = np.concatenate((qc, tc.flatten()))
 
             qctc.append(out_data)
 
         qctc = np.array(qctc)
 
-        #! Normalize t
-        x_min, x_max = np.min(qctc[:, 4]), np.max(qctc[:,4])
-        y_min, y_max = np.min(qctc[:, 5]), np.max(qctc[:,5])
-        z_min, z_max = np.min(qctc[:, 6]), np.max(qctc[:,6])
+        #! Normalize t disabled
+        # x_min, x_max = np.min(qctc[:, 4]), np.max(qctc[:,4])
+        # y_min, y_max = np.min(qctc[:, 5]), np.max(qctc[:,5])
+        # z_min, z_max = np.min(qctc[:, 6]), np.max(qctc[:,6])
 
-        qctc[:, 4] = (qctc[:, 4] - x_min) / (x_max - x_min)
-        qctc[:, 5] = (qctc[:, 5] - y_min) / (y_max - y_min)
-        qctc[:, 6] = (qctc[:, 6] - z_min) / (z_max - z_min)
+        # qctc[:, 4] = (qctc[:, 4] - x_min) / (x_max - x_min)
+        # qctc[:, 5] = (qctc[:, 5] - y_min) / (y_max - y_min)
+        # qctc[:, 6] = (qctc[:, 6] - z_min) / (z_max - z_min)
 
-        qctc[:, 4:] = (qctc[:, 4:] * 2) -1
+        # qctc[:, 4:] = (qctc[:, 4:] * 2) -1
 
         # print('min and max:')
         # print(x_min, y_min, z_min, x_max, y_max, z_max)
@@ -76,10 +81,6 @@ class SceneDataset(Dataset):
 
         #! Get qctc
         qctc = self.qctc[idx]
-
-        # print(img_tensor.shape)
-        # print(torch.min(img_tensor))
-        # print(torch.max(img_tensor))
 
         #! Return
         return {
