@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # parser.add_argument("--dataset", type=str, default="dino", choices=["circle", "dino", "line", "moons"])
     # parser.add_argument("--train_batch_size", type=int, default=32)
     parser.add_argument("--eval_batch_size", type=int, default=1000)
-    parser.add_argument("--num_epochs", type=int, default=200)
+    parser.add_argument("--num_epochs", type=int, default=1000)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--num_timesteps", type=int, default=50)
     parser.add_argument("--beta_schedule", type=str, default="linear", choices=["linear", "quadratic"])
@@ -150,22 +150,22 @@ if __name__ == "__main__":
     os.makedirs(outdir, exist_ok=True)
     torch.save(model.state_dict(), f"{outdir}/model.pth")
 
-    print("Saving images...")
-    imgdir = f"{outdir}/images"
-    os.makedirs(imgdir, exist_ok=True)
-    frames = np.stack(frames)
-    xmin, xmax = -6, 6
-    ymin, ymax = -6, 6
-    for i, frame in enumerate(frames):
-        plt.figure(figsize=(10, 10))
-        plt.scatter(frame[:, 0], frame[:, 1])
-        plt.xlim(xmin, xmax)
-        plt.ylim(ymin, ymax)
-        plt.savefig(f"{imgdir}/{i:04}.png")
-        plt.close()
+    # print("Saving images...")
+    # imgdir = f"{outdir}/images"
+    # os.makedirs(imgdir, exist_ok=True)
+    # frames = np.stack(frames)
+    # xmin, xmax = -6, 6
+    # ymin, ymax = -6, 6
+    # for i, frame in enumerate(frames):
+    #     plt.figure(figsize=(10, 10))
+    #     plt.scatter(frame[:, 0], frame[:, 1])
+    #     plt.xlim(xmin, xmax)
+    #     plt.ylim(ymin, ymax)
+    #     plt.savefig(f"{imgdir}/{i:04}.png")
+    #     plt.close()
 
     print("Saving loss as numpy array...")
     np.save(f"{outdir}/loss.npy", np.array(losses))
 
-    print("Saving frames...")
-    np.save(f"{outdir}/frames.npy", frames)
+    # print("Saving frames...")
+    # np.save(f"{outdir}/frames.npy", frames)
