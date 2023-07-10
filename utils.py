@@ -119,4 +119,8 @@ def diff_qctc(qctc, qctc_gt):
     trans_error = np.sqrt(np.sum(np.square(qctc[:,4:]-qctc_gt[4:]), axis=1))
     trans_error_mean = np.mean(trans_error)
 
-    return mean_mse, eul_diff_mean, trans_error_mean
+    mean_mse = mean_mse.reshape(-1)
+    trans_error_mean = trans_error_mean.reshape(-1)
+    all = np.concatenate([mean_mse, eul_diff_mean, trans_error_mean])
+
+    return all
