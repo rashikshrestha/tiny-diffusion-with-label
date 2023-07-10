@@ -1,5 +1,7 @@
 import numpy as np
 from read_write_model import read_images_text, qvec2rotmat, rotmat2qvec
+from scipy.spatial.transform import Rotation as R
+
 
 def normalize_qt(qt):
     """
@@ -70,3 +72,51 @@ def get_cam_plot(qvec, tvec, unit_cam):
     """
     R = qvec2rotmat(qvec)
     return (R@unit_cam.T + tvec.reshape(3,1)).T
+
+
+def diff_qctc(qctc, qctc_gt):
+    """
+    Find difference between two qctc
+
+    Parameters
+    ---------
+    qctc: np.ndarray
+        (N,7) q might be un-normalized
+    qctc2_gt: np.ndarray
+        (7,) q is normalized, since it is GT
+
+    Returns
+    -------
+    mse: float
+        Mean Square error between two qctc
+    yaw,pitch,roll: float
+        Angle errors
+    trans: float
+        Translational error
+    """
+    # print(qctc.shape, qctc_gt.shape)
+    #! Normalize qc (just to be sure)
+    qctc = normalize_qt(qctc)
+
+    #! MSE
+    mse = np.sum(np.square(qctc-qctc_gt), axis=1)/qctc_gt.shape[0] # Error in each sample of N
+    mean_mse = np.mean(mse)
+
+    #! YPR error
+    R_gt = qvec2rotmat(qctc_gt[:4])
+
+    eul_diff = []
+    for qt in qctc:
+        r = qvec2rotmat(qt[:4])
+        r_diff = R_gt.T@r
+        r_diff_scipy = R.from_matrix(r_diff)
+        eul = r_diff_scipy.as_euler('zxy', degrees=True)
+        eul_diff.append(eul)
+    eul_diff = np.array(eul_diff)
+    eul_diff_mean = np.mean(np.abs(eul_diff), axis=0)
+
+    #! Trans error
+    trans_error = np.sqrt(np.sum(np.square(qctc[:,4:]-qctc_gt[4:]), axis=1))
+    trans_error_mean = np.mean(trans_error)
+
+    return mean_mse, eul_diff_mean, trans_error_mean
