@@ -1,14 +1,14 @@
 from PIL import Image
 from tqdm import tqdm
 
-exp_name = 'sin_cos_4'
-label = 135
+exp_name = 'scene_first_best'
+label = '0.0'
 
 print(f"Creating GIF for Exp: {exp_name}, Label: {label}")
 
 all_batch = []
 for i in tqdm(range(50)):
-    big_img = Image.open(f"exps/{exp_name}/rev_diffusion/label_{label}/{i:04d}.png")
+    big_img = Image.open(f"exps/{exp_name}/rev_diffusion/label_{label}/3d_{i:04d}.jpg")
     all_batch.append(big_img)
 
 first_batch = all_batch[0]
