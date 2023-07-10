@@ -76,8 +76,9 @@ if __name__ == "__main__":
 
         fake_y = np.random.rand(*initial_sample.shape)
 
+        errors = []
         frames = []
-        correct_filter = []
+        # correct_filter = []
 
         #! For each timestep:
         for i, t in enumerate(tqdm(timesteps)):
@@ -104,16 +105,17 @@ if __name__ == "__main__":
 
             result = sample.numpy()
 
-            #! Error between exp_val and result
-            # TODO: here normalize q before finding computing error
-            error = np.abs(result - exp_op.numpy())
+            #! Calculate Error
+            error = utils.diff_qctc(result, exp_op.numpy())
+            # print(mse, rot, trans)
 
-            error_thres = 0.1
-            correct_result = error < error_thres 
+            # error_thres = 0.1
+            # correct_result = error < error_thres 
+            # correct_filter.append(correct_result)
 
-            correct_filter.append(correct_result)
-
+            #! Accumulate everything
             frames.append(result)
+            errors.append(error)
 
         #! ---------------------------------------------------------------------
 
@@ -124,10 +126,14 @@ if __name__ == "__main__":
 
         # Convert to Numpy
         frames = np.stack(frames)
-        correct_filter = np.stack(correct_filter)
+        errors = np.array(errors)
+        # correct_filter = np.stack(correct_filter)
 
-        print("Correct Filter: ")
-        print(correct_filter.shape)
+        print(frames.shape)
+        print(errors.shape)
+
+        # print("Correct Filter: ")
+        # print(correct_filter.shape)
 
         
         xmin, xmax = -6, 6
@@ -141,6 +147,7 @@ if __name__ == "__main__":
             # input()
 
             fig = plt.figure(figsize=(8, 8))
+
             ax = fig.add_subplot(111, projection='3d')
             ax.view_init(elev=-70, azim=90, roll=0)
             ax.set_xlim(-1,1)
@@ -155,12 +162,19 @@ if __name__ == "__main__":
             #! Plot all 100 camera poses in this time step
             for frm in frame:
                 cam = utils.get_cam_plot(frm[:4], frm[4:], unit_cam)
-                ax.plot(cam[:,0], cam[:,1], cam[:,2], alpha=0.5)
+                ax.plot(cam[:,0], cam[:,1], cam[:,2], alpha=0.3)
 
             #! Plot GT pose
             exp_op_np = exp_op.numpy()
             gt_cam = utils.get_cam_plot(exp_op_np[:4], exp_op_np[4:], unit_cam)
             ax.plot(gt_cam[:,0], gt_cam[:,1], gt_cam[:,2], linewidth=3)
+
+            e = errors[i]
+            trans_percent = (e[4]/2)*100
+            text = f"MSE: {e[0]:.4f}  |  YPR: {e[1]:.2f}, {e[2]:.2f}, {e[3]:.2f}  |  TRANS: {e[4]:.3f} ({trans_percent:.1f}%)"
+            fig.text(x=0.5, y=0, s=text, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize=12)
+
+            # fig.text(0.5, 0.5, "hahaha")
 
             plt.savefig(f"{imgdir}/3d_{i:04}.jpg")
             plt.close()   
