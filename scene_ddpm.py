@@ -36,6 +36,7 @@ if __name__ == "__main__":
 
     #! Define Dataset
     dataset = SceneDataset()
+    print(f"Dataset Length: {dataset.__len__()}")
     dataloader = DataLoader(dataset, batch_size=dataset.__len__(), shuffle=True, drop_last=True)
 
     # print(dataloader)
@@ -80,7 +81,7 @@ if __name__ == "__main__":
         for step, batch in enumerate(dataloader):
             image, qctc = batch['image'], batch['qctc']
 
-            print(image.shape, qctc.shape)
+            # print(image.shape, qctc.shape)
             # input()
             # batch = batch[0]
             # print(batch)
