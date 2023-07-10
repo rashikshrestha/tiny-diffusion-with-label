@@ -8,56 +8,7 @@ import matplotlib.pyplot as plt
 from scene_dataset import SceneDataset
 from scene_model import MLP
 from noise_scheduler import NoiseScheduler
-from read_write_model import read_images_text, qvec2rotmat, rotmat2qvec
-
-def get_unit_cam():
-    f = 10
-    unit_cam = np.array([
-        [0,0,0],
-        [3,-2,f],
-        [3,2,f],
-        [-3,2,f],
-        [-3,-2,f],
-        [0,-4,f]
-    ])
-
-    seq = np.array([3,4,1,2,0,1,5,4,0,3,2])
-    draw_cam = unit_cam[seq]
-
-    return draw_cam
-
-def get_cam_plot(qvec, tvec, unit_cam):
-    R = qvec2rotmat(qvec)
-
-    # t = -R.T@tvec.reshape(3,1)
-    # R = R.T
-
-    t = tvec
-    cam = (R@unit_cam.T + t.reshape(3,1)).T
-    return cam
-
-def normalize_qt(qt):
-        
-    #! Normalize q
-    q = qt[:, :4]
-    q_norm = np.linalg.norm(q, axis=1)
-    q = q/q_norm.reshape(-1,1)
-    qt[:, :4] = q
-
-    #! Normalize t
-    #TODO: Should we do this as well ??
-    # x_min, x_max = np.min(qt[:, 4]), np.max(qt[:,4])
-    # y_min, y_max = np.min(qt[:, 5]), np.max(qt[:,5])
-    # z_min, z_max = np.min(qt[:, 6]), np.max(qt[:,6])
-
-    # qt[:, 4] = (qt[:, 4] - x_min) / (x_max - x_min)
-    # qt[:, 5] = (qt[:, 5] - y_min) / (y_max - y_min)
-    # qt[:, 6] = (qt[:, 6] - z_min) / (z_max - z_min)
-
-    # qt[:, 4:] = (qt[:, 4:] * 2) -1
-
-    return qt
-
+import utils
 
 
 if __name__ == "__main__":
@@ -105,37 +56,19 @@ if __name__ == "__main__":
     timesteps = list(range(len(noise_scheduler)))[::-1]
 
     #! Define Inputs and Outputs
-    # labels = [0,1,2,3] #! Inputs
-    # expected_op = [[2,2],[2,-2],[-2,-2],[-2,2]] #! Expected Outputs
-
-    # labels = [0, 90, 180, 270] #! Inputs
-    # expected_op = [[0,1],[1,0],[0,-1],[-1,0]] #! Expected Outputs
-
-    # labels = [45, 135] #! Inputs
-    # expected_op = [[0.71, 0.71], [0.71, -0.71]] #! Expected Outputs
-    # data = dataset[0]
-    # labels = data['image']
-    # expected_op = data['qctc']
-
-    # print("got this from dataset:")
-    # print(labels.shape, expected_op.shape)
-    # input()
-
-
-
-    ip_dim = 1
     op_dim = 7
 
     label_named = np.linspace(0,49, 49)
 
-    unit_cam = get_unit_cam()*0.1
+    unit_cam = utils.get_identity_cam(0.02)
 
     #! For each Label:
     # for label, exp_op in zip(labels, expected_op):
     for count, dataa in enumerate(dataset):
         label = dataa['image']
         exp_op = dataa['qctc']
-        print("Labels and Expected Outputs are:", label.shape, exp_op)
+        print("Data point:", dataa['name'], exp_op)
+        # print("Labels and Expected Outputs are:", label.shape, exp_op)
         #! Get a random data sample
         sample = torch.randn(config.eval_batch_size, op_dim)
         # sample = normalize_qt(sample)
@@ -161,8 +94,8 @@ if __name__ == "__main__":
                 t = t.to(config.device)
                 l = l.to(config.device)
 
-                print('input shapes:')
-                print(sample.shape, t.shape, l.shape)
+                # print('input shapes:')
+                # print(sample.shape, t.shape, l.shape)
 
                 residual = model(sample, t, l)
 
@@ -172,6 +105,7 @@ if __name__ == "__main__":
             result = sample.numpy()
 
             #! Error between exp_val and result
+            # TODO: here normalize q before finding computing error
             error = np.abs(result - exp_op.numpy())
 
             error_thres = 0.1
@@ -209,19 +143,24 @@ if __name__ == "__main__":
             fig = plt.figure(figsize=(8, 8))
             ax = fig.add_subplot(111, projection='3d')
             ax.view_init(elev=-70, azim=90, roll=0)
-            ax.set_xlim(-2,2)
-            ax.set_ylim(-2,2)
-            ax.set_zlim(-2,2)
+            ax.set_xlim(-1,1)
+            ax.set_ylim(-1,1)
+            ax.set_zlim(-1,1)
+            ax.view_init(elev=-70, azim=-90, roll=0)
 
             #! Normalize q
-            frame = normalize_qt(frame)
+            frame = utils.normalize_qt(frame)
 
 
             #! Plot all 100 camera poses in this time step
             for frm in frame:
-                cam = get_cam_plot(frm[:4], frm[4:], unit_cam)
-                ax.plot(cam[:,0], cam[:,1], cam[:,2])
+                cam = utils.get_cam_plot(frm[:4], frm[4:], unit_cam)
+                ax.plot(cam[:,0], cam[:,1], cam[:,2], alpha=0.5)
 
+            #! Plot GT pose
+            exp_op_np = exp_op.numpy()
+            gt_cam = utils.get_cam_plot(exp_op_np[:4], exp_op_np[4:], unit_cam)
+            ax.plot(gt_cam[:,0], gt_cam[:,1], gt_cam[:,2], linewidth=3)
 
             plt.savefig(f"{imgdir}/3d_{i:04}.jpg")
             plt.close()   
