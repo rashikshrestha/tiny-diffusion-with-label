@@ -35,7 +35,7 @@ if __name__ == "__main__":
     config = parser.parse_args()
 
     #! Define Dataset
-    dataset = SceneDataset(path='/home/menelaos/rashik/others/dtu_reconstruct', filename='poses_train_5.txt')
+    dataset = SceneDataset(path='/home/menelaos/rashik/others/dtu_reconstruct', filename='poses_train_5.txt', N=config.train_batch_size)
     print(f"Dataset Length: {dataset.__len__()}")
     dataloader = DataLoader(dataset, batch_size=dataset.__len__(), shuffle=True, drop_last=True)
     # dataloader = DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True, drop_last=True)
