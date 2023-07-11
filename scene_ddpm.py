@@ -20,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--experiment_name", type=str, default="base")
     parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "cuda", "cuda:0", "cuda:1"])
     # parser.add_argument("--dataset", type=str, default="dino", choices=["circle", "dino", "line", "moons"])
-    # parser.add_argument("--train_batch_size", type=int, default=32)
+    parser.add_argument("--train_batch_size", type=int, default=128)
     parser.add_argument("--eval_batch_size", type=int, default=1000)
     parser.add_argument("--num_epochs", type=int, default=1000)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
@@ -35,9 +35,10 @@ if __name__ == "__main__":
     config = parser.parse_args()
 
     #! Define Dataset
-    dataset = SceneDataset()
+    dataset = SceneDataset(path='/home/menelaos/rashik/others/dtu_reconstruct', filename='poses_train_5.txt')
     print(f"Dataset Length: {dataset.__len__()}")
     dataloader = DataLoader(dataset, batch_size=dataset.__len__(), shuffle=True, drop_last=True)
+    # dataloader = DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True, drop_last=True)
 
     # print(dataloader)
     # print('data keys: ')
