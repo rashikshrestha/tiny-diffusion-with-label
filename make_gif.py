@@ -1,7 +1,7 @@
 from PIL import Image
 from tqdm import tqdm
 
-exp_name = 'scene_first_best'
+exp_name = 'scene2_knock5'
 label = '0.0'
 
 print(f"Creating GIF for Exp: {exp_name}, Label: {label}")
