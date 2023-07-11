@@ -31,7 +31,8 @@ if __name__ == "__main__":
     config = parser.parse_args()
 
     #! Define Dataset
-    dataset = SceneDataset()
+    train_dataset = SceneDataset(path='/home/menelaos/rashik/others/dtu_reconstruct', filename='poses_train_5.txt')
+    test_dataset = SceneDataset(path='/home/menelaos/rashik/others/dtu_reconstruct', filename='poses_test_5.txt')
 
 
     #! Define Model
@@ -64,7 +65,7 @@ if __name__ == "__main__":
 
     #! For each Label:
     # for label, exp_op in zip(labels, expected_op):
-    for count, dataa in enumerate(dataset):
+    for count, dataa in enumerate(test_dataset):
         label = dataa['image']
         exp_op = dataa['qctc']
         print("Data point:", dataa['name'], exp_op)
@@ -164,11 +165,20 @@ if __name__ == "__main__":
                 cam = utils.get_cam_plot(frm[:4], frm[4:], unit_cam)
                 ax.plot(cam[:,0], cam[:,1], cam[:,2], alpha=0.3)
 
-            #! Plot GT pose
+            #! Plot Test GT pose
             exp_op_np = exp_op.numpy()
             gt_cam = utils.get_cam_plot(exp_op_np[:4], exp_op_np[4:], unit_cam)
-            ax.plot(gt_cam[:,0], gt_cam[:,1], gt_cam[:,2], linewidth=3)
+            ax.plot(gt_cam[:,0], gt_cam[:,1], gt_cam[:,2], linewidth=4, color='green')
+            
+            #! Plot Train Dataset poses
+            for td in train_dataset:
+                t_qctc = td['qctc'].numpy()
+                cam = utils.get_cam_plot(t_qctc[:4], t_qctc[4:], unit_cam)
+                ax.plot(cam[:,0], cam[:,1], cam[:,2], alpha=1, color='red')
 
+      
+
+            #! Write errors to the image
             e = errors[i]
             trans_percent = (e[4]/2)*100
             text = f"MSE: {e[0]:.4f}  |  YPR: {e[1]:.2f}, {e[2]:.2f}, {e[3]:.2f}  |  TRANS: {e[4]:.3f} ({trans_percent:.1f}%)"
@@ -229,4 +239,4 @@ if __name__ == "__main__":
 
 
         print("Done !")
-        input()
+        # input()
