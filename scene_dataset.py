@@ -8,13 +8,13 @@ import torch
 
 
 class SceneDataset(Dataset):
-    def __init__(self, path='/home/menelaos/rashik/others/dtu_reconstruct', N=None):
+    def __init__(self, path='/home/menelaos/rashik/others/dtu_reconstruct', filename='poses.txt', N=None):
         print("\nScene Dataset")
         print("--------------")
         self.path = path
 
         #! Get data
-        self.names, self.qctcs = self.get_names_qctcs(f"{path}/poses.txt")
+        self.names, self.qctcs = self.get_names_qctcs(f"{path}/{filename}")
         available_data_points = len(self.names)
         print(f"Unique Data Points: {available_data_points}")
 
@@ -62,7 +62,7 @@ class SceneDataset(Dataset):
 
         #! Get Name
         name = self.names[index]
-        print(f"Getting image: {name}")
+        # print(f"Getting image: {name}")
 
         #! Get image
         img = Image.open(f"{self.path}/images/{name}")
