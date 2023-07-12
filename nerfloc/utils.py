@@ -1,5 +1,5 @@
 import numpy as np
-from read_write_model import read_images_text, qvec2rotmat, rotmat2qvec
+from nerfloc.utils.read_write_model import read_images_text, qvec2rotmat, rotmat2qvec
 from scipy.spatial.transform import Rotation as R
 
 

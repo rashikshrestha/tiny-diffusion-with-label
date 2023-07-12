@@ -1,6 +1,6 @@
 import argparse
 import numpy as np
-from read_write_model import read_images_text, qvec2rotmat, rotmat2qvec
+from nerfloc.utils.read_write_model import read_images_text, qvec2rotmat, rotmat2qvec
 np.set_printoptions(suppress=True, precision=4)
 
 
