@@ -1,5 +1,6 @@
 import numpy as np
-from nerfloc.utils.read_write_model import read_images_text, qvec2rotmat, rotmat2qvec
+import torch
+from nerfloc.utils.read_write_model import qvec2rotmat
 from scipy.spatial.transform import Rotation as R
 
 
@@ -22,56 +23,39 @@ def normalize_qt(qt):
     return qt 
 
 
-def get_identity_cam(scale=1):
+def get_names_qctcs(poses_path):
     """
-    Gets an identity camera plot
+    Get image names and poses from the poses.txt file
 
     Parameters
     ----------
-    scale: int
-        Scale of the camera plot
+    poses_path: str
+        Path to pose file
 
     Returns
     -------
-    cam_plot: np.ndarray
-        (11, 3) Sequence of points to make camera plot
+    names: list
+        List of image names
+    poses: torch.Tensor
+        (N,7) Poses
     """
-    f = 10
-    unit_cam = np.array([
-        [0,0,0],
-        [3,-2,f],
-        [3,2,f],
-        [-3,2,f],
-        [-3,-2,f],
-        [0,-4,f]
-    ])
+    names = []
+    qctcs = []
 
-    seq = np.array([3,4,1,2,0,1,5,4,0,3,2])
-    draw_cam = unit_cam[seq]
+    with open(poses_path) as file:
+        data = file.readlines()
 
-    return draw_cam*scale
+        for line in data:
+            line_split = line[:-1].split(' ')
+            name = line_split[0]
+            qctc = []
+            for i in range(1,8):
+                qctc.append(float(line_split[i]))
 
+            names.append(name)
+            qctcs.append(qctc)
 
-def get_cam_plot(qvec, tvec, unit_cam):
-    """
-    Gets camera plot, pose defined by given quaternion and translation
-
-    Parameters
-    ----------
-    qvec: np.ndarray
-        (4,) Quaternion of Camera Pose
-    tvec: np.ndarray
-        (3,) Translation of Camera Pose
-    unit_cam: np.ndarray
-        (11,3) Ideal camera sequence
-
-    Returns
-    -------
-    cam: np.ndarray
-        (11,3) Sequence of corrdinates to draw given camera pose
-    """
-    R = qvec2rotmat(qvec)
-    return (R@unit_cam.T + tvec.reshape(3,1)).T
+    return names, torch.as_tensor(qctcs, dtype=torch.float32)
 
 
 def diff_qctc(qctc, qctc_gt):
