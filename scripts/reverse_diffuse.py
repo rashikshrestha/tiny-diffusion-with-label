@@ -5,10 +5,11 @@ from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
 
-from scene_dataset import SceneDataset
-from scene_model import MLP
-from noise_scheduler import NoiseScheduler
-import utils
+#! nerfloc imports
+from nerfloc.dataset.scene_dataset import SceneDataset
+from nerfloc.model.scene_model import MLP
+from nerfloc.diffusion.noise_scheduler import NoiseScheduler
+import nerfloc.utils.base as utils
 
 
 if __name__ == "__main__":
