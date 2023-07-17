@@ -1,16 +1,15 @@
-import os
-from torch.utils.data import Dataset
-from PIL import Image
-from torchvision import transforms
-from random import randint
 import numpy as np
 import torch
+from torch.utils.data import Dataset
+from torchvision import transforms
+from PIL import Image
 
 
 class SceneDataset(Dataset):
-    def __init__(self, path='/home/menelaos/rashik/others/dtu_reconstruct', filename='poses.txt', N=None):
-        print("\nScene Dataset")
-        print("--------------")
+    def __init__(self, path, filename, N=None):
+
+        print("\nScene Dataset\n--------------")
+        print(f"Using: {path}/{filename}")
         self.path = path
 
         #! Get data
@@ -24,13 +23,12 @@ class SceneDataset(Dataset):
         else:
             self.index = np.random.randint(0,available_data_points, size=N)
 
-        print(f"Total data: {self.__len__()}\n")
+        print(f"Total Data: {self.__len__()}\n")
 
         #! Image pre-process (as used in ImageNet classification)
         self.preprocess = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Grayscale(),
-            # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
 

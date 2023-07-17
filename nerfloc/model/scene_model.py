@@ -1,7 +1,6 @@
 import torch
 from torch import nn
-from positional_embeddings import PositionalEmbedding
-from SuperGluePretrainedNetwork.models.superpointtrim import SuperPoint
+from nerfloc.model.positional_embeddings import PositionalEmbedding
 
 
 class Block(nn.Module):
@@ -15,30 +14,19 @@ class Block(nn.Module):
         return x + self.act(self.ff(x))
 
 
-class MLP(nn.Module):
+class SceneModel(nn.Module):
     def __init__(self, 
                  hidden_size: int = 1024, 
                  hidden_layers: int = 5, 
                  emb_size: int = 128,
                  time_emb: str = "sinusoidal", 
-                 label_emb: str = "sinusoidal", 
                  input_emb: str = "sinusoidal"
                 ):
         super().__init__()
 
         #! Embeddings for image
-        # self.resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18')
-        # self.label_mlp = nn.Linear(1000, 512)
-
-        self.sp = SuperPoint(config={})
-        self.sp_relu = nn.ReLU(inplace=True)
-        self.sp_pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.sp_conv1 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-        self.sp_conv2 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-        self.sp_conv3 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-        self.sp_mlp1 = nn.Linear(8960, 4096)
-        self.sp_mlp2 = nn.Linear(4096, 2048)
-        self.sp_mlp3 = nn.Linear(2048, 512)
+        self.resnet = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18')
+        self.label_mlp = nn.Linear(1000, 512)
 
         #! Positional Embeddings for time
         self.time_mlp = PositionalEmbedding(emb_size, time_emb)
@@ -91,24 +79,8 @@ class MLP(nn.Module):
         t_emb = self.time_mlp(t)
 
         #! Image Embedding
-        # print("applying super point")
-        # print(l.shape)
-        l_emb = self.sp(l)
-        # print(l_emb.shape)
-        l_emb = self.sp_pool(self.sp_relu(self.sp_conv1(l_emb)))
-        l_emb = self.sp_pool(self.sp_relu(self.sp_conv2(l_emb)))
-        l_emb = self.sp_pool(self.sp_relu(self.sp_conv3(l_emb)))
-        # print(l_emb.shape)
-        l_emb = l_emb.reshape(l_emb.shape[0], -1)
-        # print(l_emb.shape)
-        l_emb = self.sp_relu(self.sp_mlp1(l_emb))
-        l_emb = self.sp_relu(self.sp_mlp2(l_emb))
-        l_emb = self.sp_relu(self.sp_mlp3(l_emb))
-        # print(l_emb.shape)
-        # input()
-
-
-        # l_emb = self.label_mlp(l_emb)
+        l_emb = self.resnet(l)
+        l_emb = self.label_mlp(l_emb)
 
         x = torch.cat((x1_emb, x2_emb, x3_emb, x4_emb, x5_emb, x6_emb, x7_emb, t_emb, l_emb), dim=-1)
         x = self.joint_mlp(x)

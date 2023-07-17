@@ -1,45 +1,77 @@
-import argparse
 import os
+import argparse
+import numpy as np
+from tqdm.auto import tqdm
+import matplotlib.pyplot as plt
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
-from tqdm.auto import tqdm
-
-import matplotlib.pyplot as plt
-import numpy as np
 
 #! nerfloc imports
 from nerfloc.dataset.scene_dataset import SceneDataset
-from nerfloc.model.scene_model import MLP
+from nerfloc.model.scene_model import SceneModel
 from nerfloc.diffusion.noise_scheduler import NoiseScheduler
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+
+    #! General
     parser.add_argument("--experiment_name", type=str, default="base")
     parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "cuda", "cuda:0", "cuda:1"])
+    parser.add_argument("--save_images_step", type=int, default=1)
+
+    #! Dataset
     # parser.add_argument("--dataset", type=str, default="dino", choices=["circle", "dino", "line", "moons"])
+    parser.add_argument("--scene_datapoints", type=int, default=None)
     parser.add_argument("--train_batch_size", type=int, default=128)
     parser.add_argument("--eval_batch_size", type=int, default=1000)
-    parser.add_argument("--num_epochs", type=int, default=1000)
-    parser.add_argument("--learning_rate", type=float, default=1e-3)
-    parser.add_argument("--num_timesteps", type=int, default=50)
-    parser.add_argument("--beta_schedule", type=str, default="linear", choices=["linear", "quadratic"])
+
+    #! Model
     parser.add_argument("--embedding_size", type=int, default=128)
     parser.add_argument("--hidden_size", type=int, default=1024)
     parser.add_argument("--hidden_layers", type=int, default=5)
     parser.add_argument("--time_embedding", type=str, default="sinusoidal", choices=["sinusoidal", "learnable", "linear", "zero"])
     parser.add_argument("--input_embedding", type=str, default="sinusoidal", choices=["sinusoidal", "learnable", "linear", "identity"])
-    parser.add_argument("--save_images_step", type=int, default=1)
+
+    #! Diffusion
+    parser.add_argument("--num_timesteps", type=int, default=50)
+    parser.add_argument("--beta_schedule", type=str, default="linear", choices=["linear", "quadratic"])
+
+    #! Training
+    parser.add_argument("--num_epochs", type=int, default=1000)
+    parser.add_argument("--learning_rate", type=float, default=1e-3)
+
     config = parser.parse_args()
 
     #! Define Dataset
-    dataset = SceneDataset(path='/home/menelaos/rashik/others/dtu_reconstruct', filename='poses_train_5.txt', N=config.train_batch_size)
-    print(f"Dataset Length: {dataset.__len__()}")
-    dataloader = DataLoader(dataset, batch_size=dataset.__len__(), shuffle=True, drop_last=True)
-    # dataloader = DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True, drop_last=True)
+    # if config.scene_datapoints is not None:
+    #     if config.scene_datapoints < config.train_batch_size:
+    #         print("k garya yr")
+    #         exit()
+
+    
+    dataset = SceneDataset(path='/home/sunycs/rashik/dataset/dtu_scene6', filename='poses.txt', N=config.scene_datapoints)
+    config.scene_datapoints = dataset.__len__()
+
+
+    if config.scene_datapoints > config.train_batch_size:
+        dataloader = DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True, drop_last=True)
+    else:
+        print("K garya yarr!")
+        exit()
+
+
+
+    # dataloader = DataLoader(dataset, batch_size=dataset.__len__(), shuffle=True, drop_last=True)
+
+    for step, batch in enumerate(dataloader):
+        print(step)
+        # print(batch['name'])
+
+    input()
 
     # print(dataloader)
     # print('data keys: ')
@@ -49,7 +81,7 @@ if __name__ == "__main__":
 
     # input()
 
-    model = MLP(
+    model = SceneModel(
         hidden_size=config.hidden_size,
         hidden_layers=config.hidden_layers,
         emb_size=config.embedding_size,
